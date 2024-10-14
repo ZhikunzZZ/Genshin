@@ -5,9 +5,9 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: dm.jdbc.driver.DmDriver
-    url: jdbc:dm://localhost:5236/DMSERVER
-    username: PSP_COCKPIT
-    password: PSP_COCKPIT
+    url: jdbc:dm://localhost:5236/DMSERVER/GS_TOOL_1
+    username: GS_TOOL_1
+    password: 123456789
 
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml

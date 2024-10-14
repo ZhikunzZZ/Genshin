@@ -1,11 +1,10 @@
 package com.gstool.common.service;
 
-import com.gstool.common.dao.ArtifactMapper;
+import com.gstool.common.dao.ArtifactDao;
 import com.gstool.common.model.base.ArtifactJson;
 import com.gstool.common.model.base.ArtifactJsonItem;
 import com.gstool.common.model.entity.ArtifactDTO;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,13 +15,13 @@ import java.util.List;
 @AllArgsConstructor
 public class ArtifactService {
 
-    private ArtifactMapper artifactMapper;
+    private ArtifactDao artifactDao;
 
     // 保存 Artifact 数据
     @Transactional
     public void saveArtifactsFromJson(String jsonContent, String userId) throws Exception {
         // 删除该用户的所有圣遗物
-        artifactMapper.deleteArtifactsByUserId(userId);
+        artifactDao.deleteArtifactsByUserId(userId);
 
         // 使用 ObjectMapper 将 JSON 转为 ArtifactJson 对象
         ObjectMapper objectMapper = new ObjectMapper();
@@ -38,7 +37,7 @@ public class ArtifactService {
 
         // 存入数据库
         for (ArtifactDTO artifact : artifacts) {
-            artifactMapper.insert(artifact);
+            artifactDao.insert(artifact);
         }
     }
 
