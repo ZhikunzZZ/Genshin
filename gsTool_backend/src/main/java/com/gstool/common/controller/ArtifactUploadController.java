@@ -1,9 +1,9 @@
 package com.gstool.common.controller;
 
-import com.gstool.common.model.base.ResultDTO;
+import com.gstool.common.model.query.ComputeArtifactQuery;
 import com.gstool.common.service.ArtifactService;
+import com.gstool.common.service.ComputeArtifactService;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +16,9 @@ import java.nio.charset.StandardCharsets;
 public class ArtifactUploadController {
 
     private final ArtifactService artifactService;
+    private final ComputeArtifactService computeArtifactService;
 
-    @PostMapping("/upload-artifacts")
+    @PostMapping("/upload-artifact")
     public ResponseEntity<String> uploadArtifacts(@RequestParam("file") MultipartFile file, @RequestParam("userId") String userId) {
         try {
             // 将文件内容转换为字符串
@@ -26,9 +27,16 @@ public class ArtifactUploadController {
             // 通过服务层处理 JSON 文件并保存数据到数据库
             artifactService.saveArtifactsFromJson(content, userId);
 
-            return ResponseEntity.ok("圣遗物数据上传成功！");
+            return ResponseEntity.ok("上传成功！");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("上传失败：" + e.getMessage());
         }
+    }
+
+    @PostMapping("/compute-artifact")
+    public void computeArtifact(@RequestBody ComputeArtifactQuery query) {
+
+        computeArtifactService.computeArtifact(query);
+
     }
 }

@@ -48,11 +48,13 @@ public class ArtifactService {
         for (ArtifactJsonItem item : jsonItems) {
             ArtifactDTO artifact = new ArtifactDTO();
             String id = userId + "_" + position+ "_" + count++;
-            System.out.println(id);
+            //System.out.println(id);
             artifact.setId(id);  // 生成的ID格式：userId-递增数字
             artifact.setSetName(item.getSetName());
             artifact.setPosition(position);  // flower, feather, etc.
             artifact.setMainTagName(item.getMainTag().getName());
+            //System.out.println(item.getMainTag().getName() +item.getMainTag().getValue());
+
             artifact.setMainTagValue(item.getMainTag().getValue());
             artifact.setLevel(item.getLevel());
             artifact.setStar(item.getStar());

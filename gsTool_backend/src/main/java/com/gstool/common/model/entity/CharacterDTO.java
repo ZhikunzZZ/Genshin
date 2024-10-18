@@ -12,12 +12,31 @@ import java.sql.Timestamp;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("TEST")
-public class TestDTO {
+@TableName("CHARACTER")
+public class CharacterDTO {
 
     @TableId(type = IdType.ASSIGN_UUID)
     private String id;
 
+
+    private Double defend;
+
+    private Integer star;
+
+    private String weaponType;
+
     private String name;
+
+    private Double elementalMastery;
+
+    private Double criticalRate;
+
+    private Double criticalDmg;
+
+    private Double attack;
+
+    private Double recharge;
+
+    private Double life;
 
 }

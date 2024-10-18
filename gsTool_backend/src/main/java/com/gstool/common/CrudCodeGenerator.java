@@ -22,10 +22,10 @@ public class CrudCodeGenerator {
 
     public static void main(String[] args) {
         String url = "jdbc:dm://localhost:5236/DMSERVER"; //数据库
-        String username = "PSP_COCKPIT";
-        String password = "PSP_COCKPIT";
-        String schemaName = "PSP_COCKPIT"; //模式名
-        String tableName = "PC_PSP_COCKPIT_MVLINE"; //表名
+        String username = "GS_TOOL_1";
+        String password = "123456789";
+        String schemaName = "GS_TOOL_1"; //模式名
+        String tableName = "ARTIFACT"; //表名
         String optionName = null; //DIY类名
 
         //项目根目录
@@ -33,7 +33,7 @@ public class CrudCodeGenerator {
         System.out.println(homePath);
 
         //输出文件地址
-        String templatePath = "D:\\tool_workspace\\gsTool_backend\\src\\main\\resources\\templates";
+        String templatePath = "D:\\gs_tool\\Genshin\\gsTool_backend\\src\\main\\resources\\templates";
         String dtoPath = homePath + "model\\entity\\";
         String voPath = homePath + "model\\vo\\";
         String queryPath = homePath + "model\\query\\";
@@ -146,13 +146,13 @@ public class CrudCodeGenerator {
             templateData.put("columns", columns);
 
             generateFile(cfg, "dto.ftl", templateData, dtoPath + className + "DTO.java");
-            generateFile(cfg, "vo.ftl", templateData, voPath + className + "VO.java");
-            generateFile(cfg, "query.ftl", templateData, queryPath + className + "Query.java");
-            generateFile(cfg, "dao.ftl", templateData, daoPath + className + "Dao.java");
-            generateFile(cfg, "service.ftl", templateData, servicePath + className + "Service.java");
-            generateFile(cfg, "serviceImpl.ftl", templateData, serviceImplPath + className + "ServiceImpl.java");
-            generateFile(cfg, "controller.ftl", templateData, controllerPath + className + "Controller.java");
-            generateFile(cfg, "mapper.ftl", templateData, mapperPath + className + "Mapper.xml");
+//            generateFile(cfg, "vo.ftl", templateData, voPath + className + "VO.java");
+//            generateFile(cfg, "query.ftl", templateData, queryPath + className + "Query.java");
+//            generateFile(cfg, "dao.ftl", templateData, daoPath + className + "Dao.java");
+//            generateFile(cfg, "service.ftl", templateData, servicePath + className + "Service.java");
+//            generateFile(cfg, "serviceImpl.ftl", templateData, serviceImplPath + className + "ServiceImpl.java");
+//            generateFile(cfg, "controller.ftl", templateData, controllerPath + className + "Controller.java");
+//            generateFile(cfg, "mapper.ftl", templateData, mapperPath + className + "Mapper.xml");
 
         } catch (IOException | TemplateException e) {
             e.printStackTrace();

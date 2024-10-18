@@ -19,7 +19,7 @@ public class ArtifactJsonItem {
     @Data
     public static class MainTag {
         private String name;
-        private int value;
+        private double value;
 
         // Getters and Setters
     }
