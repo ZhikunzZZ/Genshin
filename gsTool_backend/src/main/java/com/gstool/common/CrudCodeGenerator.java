@@ -25,7 +25,7 @@ public class CrudCodeGenerator {
         String username = "GS_TOOL_1";
         String password = "123456789";
         String schemaName = "GS_TOOL_1"; //模式名
-        String tableName = "ARTIFACT"; //表名
+        String tableName = "RECOMMEND_ARTIFACT"; //表名
         String optionName = null; //DIY类名
 
         //项目根目录

@@ -18,7 +18,6 @@ public class CharacterDTO {
     @TableId(type = IdType.ASSIGN_UUID)
     private String id;
 
-
     private Double defend;
 
     private Integer star;

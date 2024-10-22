@@ -10,6 +10,6 @@ import java.util.List;
 @Mapper
 public interface NormalAttackMultiplierDao {
 
-    @Select("SELECT * FROM NORMAL_ATTACK_MULTIPLIER WHERE CHARACTER_ID = #{characterId}")
-    List<NormalAttackMultiplierDTO> findByName(@Param("characterId") String characterId);
+    @Select("SELECT * FROM NORMAL_ATTACK_MULTIPLIER WHERE ID = #{id}")
+    NormalAttackMultiplierDTO findByName(@Param("id") String id);
 }

@@ -4,12 +4,18 @@ import com.gstool.common.dao.ArtifactDao;
 import com.gstool.common.dao.CharacterDao;
 import com.gstool.common.dao.NormalAttackMultiplierDao;
 import com.gstool.common.dao.WeaponDao;
+import com.gstool.common.model.base.ArtifactListDTO;
+import com.gstool.common.model.base.AttributeAndMultiplierZoneDTO;
+import com.gstool.common.model.base.AttributeDTO;
 import com.gstool.common.model.entity.ArtifactDTO;
 import com.gstool.common.model.entity.CharacterDTO;
 import com.gstool.common.model.entity.NormalAttackMultiplierDTO;
 import com.gstool.common.model.entity.WeaponDTO;
 import com.gstool.common.model.query.ComputeArtifactQuery;
 import com.gstool.common.service.ComputeArtifactService;
+import com.gstool.common.service.method.BaseGetMethod;
+import com.gstool.common.service.method.BaseSetMethod;
+import com.gstool.common.service.method.targetFunction.fire.ArlecchinoFunction;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,35 +29,83 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
     private WeaponDao weaponDao;
     private NormalAttackMultiplierDao normalAttackMultiplierDao;
     private ArtifactDao artifactDao;
+    private BaseGetMethod baseGetMethod;
+    private ArlecchinoFunction arlecchinoFunction;
+    private BaseSetMethod baseSetMethod;
 
     @Override
     public void computeArtifact(ComputeArtifactQuery query){
 
         CharacterDTO character = characterDao.findByName(query.getCharacter());
         WeaponDTO weapon = weaponDao.findByName(query.getWeapon());
-        List<NormalAttackMultiplierDTO> n = normalAttackMultiplierDao.findByName(character.getId());
-        Double result = 1.137;
-//        for (NormalAttackMultiplierDTO dto : n) {
-//            if ("Arlecchino_1".equals(dto.getId())) {
-//                result = dto.getLv13() * 0.01;
-//                break;
-//            }
-//        }
+        AttributeAndMultiplierZoneDTO a = new AttributeAndMultiplierZoneDTO();
 
-        System.out.println(result);
-        
+        //数值初始化（计算角色90级初始数值+武器主词条）
+        double baseAttack = character.getAttack() + weapon.getBaseAttack();
+        double baseHp = character.getLife();
+        double baseDefend = character.getDefend();
+        double baseElementalMastery = character.getElementalMastery();
+        double baseRecharge = character.getRecharge();
+        double baseCriticalRate = character.getCriticalRate();
+        double baseCriticalDmg = character.getCriticalDmg();
 
-        System.out.println(character.getName());
-        System.out.println(weapon.getName());
-        for (NormalAttackMultiplierDTO dto : n) {
-            System.out.println(dto.getId());
-        }
+        a.setAttack(baseAttack);
+        a.setHp(baseHp);
+        a.setDefense(baseDefend);
+        a.setElementalMastery(baseElementalMastery);
+        a.setEnergyRecharge(baseRecharge);
+        a.setCriticalRate(baseCriticalRate);
+        a.setCriticalDamage(baseCriticalDmg);
+        //治疗加成与护盾强度（暂时无用）
+        a.setHealingBonus(0.0);
+        a.setShieldStrength(0.0);
+        //火元素
+        a.setPyroDamageBonus(0.0);
+        //水元素
+        a.setHydroDamageBonus(0.0);
+        //草元素
+        a.setDendroDamageBonus(0.0);
+        //雷元素
+        a.setElectroDamageBonus(0.0);
+        //风元素
+        a.setAnemoDamageBouns(0.0);
+        //冰元素
+        a.setCryoDamageBonus(0.0);
+        //岩元素
+        a.setGeoDamageBonus(0.0);
+        //物理
+        a.setPhysicalDamageBonus(0.0);
 
-        List<ArtifactDTO> flowerList = artifactDao.findByPositionAndMainTag("111", "flower", "lifeStatic");
-        List<ArtifactDTO> featherList = artifactDao.findByPositionAndMainTag("111", "feather", "attackStatic");
-        List<ArtifactDTO> sandList = artifactDao.findByPositionAndMainTag("111", "sand", "attackPercentage");
-        List<ArtifactDTO> cupList = artifactDao.findByPositionAndMainTag("111", "cup", "fireBonus");
-        List<ArtifactDTO> headList = artifactDao.findByPositionAndMainTag("111", "head", "critical");
+        a.setBaseDamageMultiplierZone(0.0);
+//        private Double criticalMultiplierZone;
+
+        //加成乘区
+        a.setBonusDamageMultiplierZone(0.0);
+        //防御乘区
+        a.setDefenseMultiplierZone(0.5);
+        //抗性乘区
+        a.setResistanceMultiplierZone(0.9);
+
+        //加入角色自身数值（包括天赋，命座，普攻或技能倍率）
+        AttributeAndMultiplierZoneDTO c_result = arlecchinoFunction.calculateMultipliers(weapon, character, query.getConstellation(),
+                query.getNormaLAttackLevel(), query.getElementalSkillLevel(), query.getElementalBurstLevel(), query.getComputeParam());
+
+        a.setBaseDamageMultiplierZone(a.getBaseDamageMultiplierZone() + c_result.getBaseDamageMultiplierZone());
+        a.setBonusDamageMultiplierZone(a.getBonusDamageMultiplierZone() + c_result.getBonusDamageMultiplierZone());
+        a.setCriticalRate(a.getCriticalRate() + c_result.getCriticalRate());
+        a.setCriticalDamage(a.getCriticalDamage() + c_result.getCriticalDamage());
+
+        //加入武器副词条以及武器被动
+        baseSetMethod.AddStatAndPassiveEffect(a, weapon);
+
+        //筛选有效圣遗物
+        ArtifactListDTO targetList = baseGetMethod.getTargetArtifactList(character.getId(), "111");
+
+        List<ArtifactDTO> flowerList = targetList.getFlowerList();
+        List<ArtifactDTO> featherList = targetList.getFeatherList();
+        List<ArtifactDTO> sandList = targetList.getSandList();
+        List<ArtifactDTO> cupList = targetList.getCupList();
+        List<ArtifactDTO> headList = targetList.getHeadList();
 
         System.out.println(flowerList.size());
         System.out.println(featherList.size());
@@ -80,12 +134,10 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
                             Boolean isMatching4 = isMatchingSet(flower, feather, sand, cup, head, "FragmentOfHarmonicWhimsy", 4);
                             Boolean isMatching2 = isMatchingSet(flower, feather, sand, cup, head, "FragmentOfHarmonicWhimsy", 2);
 
-
-                            double baseAttack = character.getAttack() + weapon.getBaseAttack();
-                            double attack = baseAttack;
-                            double critRate = character.getCriticalRate() * 0.01 + weapon.getSecondaryStatValue() * 0.01;
-                            double critDmg = character.getCriticalDmg() * 0.01;
-                            double fireBonus = 0.0;
+                            double attack = a.getAttack();
+                            double critRate = a.getCriticalRate();
+                            double critDmg = a.getCriticalDamage();
+                            double fireBonus = a.getPyroDamageBonus();
 
                             attack += (getMainStatValue(sand, "attackPercentage") + getMainStatValue(cup, "attackPercentage")
                                     + getMainStatValue(head, "attackPercentage") + getSubStatValue(flower, "attackPercentage")
@@ -108,18 +160,20 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
 
                             double hope_dmg = 0.0;
 
+
                             if(isMatching2){
                                 attack += 0.18 * baseAttack;
                             }
 
-                            double base_part = attack * (result + (2.884 * 1.7) + (1 * 1.7));
-                            double crit_part = (1 + critDmg + 0.7) * (critRate + 0.1) + 1 * (1 - critRate - 0.1);
+                            double crit_part = (1 + critDmg) * (critRate) + 1 * (1 - critRate);
+
                             if(isMatching4){
-                                hope_dmg = base_part * (1 + 0.36 + 0.54 + 0.4 + fireBonus) * crit_part * 0.505 * 0.9;
+                                hope_dmg = (a.getBaseDamageMultiplierZone() * attack) * (1 + a.getBonusDamageMultiplierZone() + 0.54 + fireBonus) * crit_part * a.getDefenseMultiplierZone() * a.getResistanceMultiplierZone();
 
                             }else {
-                                hope_dmg = base_part * (1 + 0.36 + 0.4 + fireBonus) * crit_part * 0.505 * 0.9;
+                                hope_dmg = (a.getBaseDamageMultiplierZone() * attack) * (1 + a.getBonusDamageMultiplierZone() + fireBonus) * crit_part * a.getDefenseMultiplierZone() * a.getResistanceMultiplierZone();
                             }
+
 //                            i++;
 //                            System.out.println(i);
 
