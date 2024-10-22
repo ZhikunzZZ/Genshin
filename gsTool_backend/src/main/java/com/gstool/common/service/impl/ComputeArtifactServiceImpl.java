@@ -19,7 +19,10 @@ import com.gstool.common.service.method.targetFunction.fire.ArlecchinoFunction;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 @AllArgsConstructor
@@ -77,7 +80,6 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         a.setPhysicalDamageBonus(0.0);
 
         a.setBaseDamageMultiplierZone(0.0);
-//        private Double criticalMultiplierZone;
 
         //加成乘区
         a.setBonusDamageMultiplierZone(0.0);
@@ -107,12 +109,6 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         List<ArtifactDTO> cupList = targetList.getCupList();
         List<ArtifactDTO> headList = targetList.getHeadList();
 
-        System.out.println(flowerList.size());
-        System.out.println(featherList.size());
-        System.out.println(sandList.size());
-        System.out.println(cupList.size());
-        System.out.println(headList.size());
-
         double max_dmg = 0.0;
         double max_attack = 0.0;
         double max_critRate = 0.0;
@@ -123,16 +119,18 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         ArtifactDTO sand_max = null;
         ArtifactDTO cup_max = null;
         ArtifactDTO head_max = null;
-//        int i = 0;
+
+        //乘区
+        double baseDamageMultiplierZone = a.getBaseDamageMultiplierZone();
+        double bonusDamageMultiplierZone = a.getBonusDamageMultiplierZone();
+        double defenseMultiplierZone = a.getDefenseMultiplierZone();
+        double resistanceMultiplierZone = a.getResistanceMultiplierZone();
 
         for (ArtifactDTO flower: flowerList) {
             for (ArtifactDTO feather: featherList) {
                 for (ArtifactDTO sand: sandList) {
                     for (ArtifactDTO cup: cupList) {
                         for (ArtifactDTO head: headList) {
-
-                            Boolean isMatching4 = isMatchingSet(flower, feather, sand, cup, head, "FragmentOfHarmonicWhimsy", 4);
-                            Boolean isMatching2 = isMatchingSet(flower, feather, sand, cup, head, "FragmentOfHarmonicWhimsy", 2);
 
                             double attack = a.getAttack();
                             double critRate = a.getCriticalRate();
@@ -160,27 +158,28 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
 
                             double hope_dmg = 0.0;
 
+                            AttributeAndMultiplierZoneDTO b = new AttributeAndMultiplierZoneDTO();
+                            b.setAttack(attack);
+                            b.setCriticalRate(critRate);
+                            b.setCriticalDamage(critDmg);
+                            b.setBaseDamageMultiplierZone(baseDamageMultiplierZone);
+                            b.setBonusDamageMultiplierZone(bonusDamageMultiplierZone);
+                            b.setDefenseMultiplierZone(defenseMultiplierZone);
+                            b.setResistanceMultiplierZone(resistanceMultiplierZone);
 
-                            if(isMatching2){
-                                attack += 0.18 * baseAttack;
-                            }
+
+                            //加入圣遗物套装加成
+                            artifactSetBonus(flower, feather, sand, cup, head, baseAttack, b);
 
                             double crit_part = (1 + critDmg) * (critRate) + 1 * (1 - critRate);
 
-                            if(isMatching4){
-                                hope_dmg = (a.getBaseDamageMultiplierZone() * attack) * (1 + a.getBonusDamageMultiplierZone() + 0.54 + fireBonus) * crit_part * a.getDefenseMultiplierZone() * a.getResistanceMultiplierZone();
+                            hope_dmg = (b.getBaseDamageMultiplierZone() * b.getAttack()) * (1 + b.getBonusDamageMultiplierZone() + fireBonus) * crit_part * b.getDefenseMultiplierZone() * b.getResistanceMultiplierZone();
 
-                            }else {
-                                hope_dmg = (a.getBaseDamageMultiplierZone() * attack) * (1 + a.getBonusDamageMultiplierZone() + fireBonus) * crit_part * a.getDefenseMultiplierZone() * a.getResistanceMultiplierZone();
-                            }
-
-//                            i++;
-//                            System.out.println(i);
 
                             if(hope_dmg > max_dmg){
 
                                 max_dmg = hope_dmg;
-                                max_attack = attack;
+                                max_attack = b.getAttack();
                                 max_critRate = critRate;
                                 max_critDmg = critDmg;
                                 max_fireBonus = fireBonus;
@@ -207,7 +206,11 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         printA(sand_max);
         printA(cup_max);
         printA(head_max);
+
     }
+
+
+
 
     private void printA(ArtifactDTO dto){
 
@@ -220,28 +223,48 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         System.out.println(dto.getThirdNormalTagName() + " - " + dto.getThirdNormalTagValue());
         System.out.println(dto.getForthNormalTagName() + " - " + dto.getForthNormalTagValue());
 
+
     }
 
-    private boolean isMatchingSet(ArtifactDTO flower, ArtifactDTO feather, ArtifactDTO sand, ArtifactDTO cup, ArtifactDTO head, String targetSetName, Integer num) {
-        int matchCount = 4 - num;
+    private void artifactSetBonus(ArtifactDTO flower, ArtifactDTO feather, ArtifactDTO sand, ArtifactDTO cup, ArtifactDTO head, Double baseAttack, AttributeAndMultiplierZoneDTO b) {
+        Map<String, Integer> setCountMap = new HashMap<>();
 
-        // 检查每个部位的 setName 是否为 targetSetName
-        if (targetSetName.equals(flower.getSetName())) {
-            matchCount++;
+        ArtifactDTO[] artifacts = {flower, feather, sand, cup, head};
+
+        for (ArtifactDTO artifact : artifacts) {
+            String setName = artifact.getSetName();
+            setCountMap.put(setName, setCountMap.getOrDefault(setName, 0) + 1);
         }
-        if (targetSetName.equals(feather.getSetName())) {
-            matchCount++;
+
+        for (Map.Entry<String, Integer> entry : setCountMap.entrySet()) {
+            String setName = entry.getKey();
+            int count = entry.getValue();
+
+            if (count >= 4) {
+                switch (setName) {
+                    case "FragmentOfHarmonicWhimsy":
+                        b.setBonusDamageMultiplierZone(b.getBonusDamageMultiplierZone() + 0.54);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
+            if (count >= 2) {
+                switch (setName) {
+                    case "FragmentOfHarmonicWhimsy", "Gladiator's Finale", "Shimenawa's Reminiscence":
+                        b.setAttack(b.getAttack() + 0.18 * baseAttack);
+                        break;
+                    case "Crimson Witch of Flames":
+                        b.setBonusDamageMultiplierZone(b.getBonusDamageMultiplierZone() + 0.15); //要修改
+                        break;
+
+                    default:
+                        break;
+                }
+            }
         }
-        if (targetSetName.equals(sand.getSetName())) {
-            matchCount++;
-        }
-        if (targetSetName.equals(cup.getSetName())) {
-            matchCount++;
-        }
-        if (targetSetName.equals(head.getSetName())) {
-            matchCount++;
-        }
-        return matchCount >= 4;
     }
 
     private double getMainStatValue(ArtifactDTO artifact, String statName) {
