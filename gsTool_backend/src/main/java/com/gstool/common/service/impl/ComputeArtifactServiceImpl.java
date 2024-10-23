@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @AllArgsConstructor
@@ -80,8 +81,8 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
 
         //加入角色自身数值（天赋，命座，普攻或技能倍率）
         arlecchinoFunction.calculateMultipliers(weapon, character, a, query.getNormaLAttackLevel(),
-                                                query.getElementalSkillLevel(), query.getElementalBurstLevel(),
-                                                query.getConstellation(), query.getComputeParam());
+                query.getElementalSkillLevel(), query.getElementalBurstLevel(),
+                query.getConstellation(), query.getComputeParam());
 
         //加入武器副词条以及武器被动
         baseSetMethod.AddStatAndPassiveEffect(a, weapon);
@@ -95,29 +96,29 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         List<ArtifactDTO> cupList = targetList.getCupList();
         List<ArtifactDTO> headList = targetList.getHeadList();
 
-        double max_dmg = 0.0;
-        double max_attack = 0.0;
-        double max_hp = 0.0;
-        double max_defense = 0.0;
-        double max_elementalMastery = 0.0;
-        double max_energyRecharge = 0.0;
-        double max_critRate = 0.0;
-        double max_critDmg = 0.0;
+        AtomicReference<Double> max_dmg = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_attack = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_hp = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_defense = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_elementalMastery = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_energyRecharge = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_critRate = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_critDmg = new AtomicReference<>(0.0);
 
-        double max_fireBonus = 0.0;
-        double max_waterBonus = 0.0;
-        double max_dendroBonus = 0.0;
-        double max_thunderBonus = 0.0;
-        double max_windBonus = 0.0;
-        double max_iceBonus = 0.0;
-        double max_rockBonus = 0.0;
-        double max_physicalBonus = 0.0;
+        AtomicReference<Double> max_fireBonus = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_waterBonus = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_dendroBonus = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_thunderBonus = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_windBonus = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_iceBonus = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_rockBonus = new AtomicReference<>(0.0);
+        AtomicReference<Double> max_physicalBonus = new AtomicReference<>(0.0);
 
-        ArtifactDTO flower_max = null;
-        ArtifactDTO feather_max = null;
-        ArtifactDTO sand_max = null;
-        ArtifactDTO cup_max = null;
-        ArtifactDTO head_max = null;
+        AtomicReference<ArtifactDTO> flower_max = new AtomicReference<>(null);
+        AtomicReference<ArtifactDTO> feather_max = new AtomicReference<>(null);
+        AtomicReference<ArtifactDTO> sand_max = new AtomicReference<>(null);
+        AtomicReference<ArtifactDTO> cup_max = new AtomicReference<>(null);
+        AtomicReference<ArtifactDTO> head_max = new AtomicReference<>(null);
 
         //乘区
         double baseDamageMultiplierZone = a.getBaseDamageMultiplierZone();
@@ -125,11 +126,11 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         double defenseMultiplierZone = a.getDefenseMultiplierZone();
         double resistanceMultiplierZone = a.getResistanceMultiplierZone();
 
-        for (ArtifactDTO flower: flowerList) {
-            for (ArtifactDTO feather: featherList) {
+        flowerList.parallelStream().forEach(flower -> {
+            featherList.parallelStream().forEach(feather -> {
                 for (ArtifactDTO sand: sandList) {
-                    for (ArtifactDTO cup: cupList) {
-                        for (ArtifactDTO head: headList) {
+                    for (ArtifactDTO cup : cupList) {
+                        for (ArtifactDTO head : headList) {
 
                             double attack = a.getAttack();
                             double Hp = a.getHp();
@@ -242,61 +243,62 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
                                     * crit_part * b.getDefenseMultiplierZone() * b.getResistanceMultiplierZone();
 
                             //如果为最高伤害值，替换
-                            if(hope_dmg > max_dmg){
-                                max_dmg = hope_dmg;
-                                max_attack = b.getAttack();
-                                max_hp = b.getHp();
-                                max_defense = b.getDefense();
-                                max_elementalMastery = b.getElementalMastery();
-                                max_energyRecharge = b.getEnergyRecharge();
-                                max_critRate = critRate;
-                                max_critDmg = critDmg;
+                            if (hope_dmg > max_dmg.get()) {
+                                max_dmg.set(hope_dmg);
+                                max_attack.set(b.getAttack());
+                                max_hp.set(b.getHp());
+                                max_defense.set(b.getDefense());
+                                max_elementalMastery.set(b.getElementalMastery());
+                                max_energyRecharge.set(b.getEnergyRecharge());
+                                max_critRate.set(b.getCriticalRate());
+                                max_critDmg.set(b.getCriticalDamage());
 
-                                max_fireBonus = b.getPyroDamageBonus();
-                                max_waterBonus = b.getHydroDamageBonus();
-                                max_dendroBonus = b.getDendroDamageBonus();
-                                max_thunderBonus = b.getElectroDamageBonus();
-                                max_windBonus = b.getAnemoDamageBonus();
-                                max_iceBonus = b.getCryoDamageBonus();
-                                max_rockBonus = b.getGeoDamageBonus();
-                                max_physicalBonus = b.getPhysicalDamageBonus();
+                                max_fireBonus.set(b.getPyroDamageBonus());
+                                max_waterBonus.set(b.getHydroDamageBonus());
+                                max_dendroBonus.set(b.getDendroDamageBonus());
+                                max_thunderBonus.set(b.getElectroDamageBonus());
+                                max_windBonus.set(b.getAnemoDamageBonus());
+                                max_iceBonus.set(b.getCryoDamageBonus());
+                                max_rockBonus.set(b.getGeoDamageBonus());
+                                max_physicalBonus.set(b.getPhysicalDamageBonus());
 
-                                flower_max = flower;
-                                feather_max = feather;
-                                sand_max = sand;
-                                cup_max = cup;
-                                head_max = head;
-
+                                flower_max.set(flower);
+                                feather_max.set(feather);
+                                sand_max.set(sand);
+                                cup_max.set(cup);
+                                head_max.set(head);
                             }
+
                         }
                     }
                 }
-            }
-        }
+            });
+        });
 
-        System.out.println("最大伤害值：" + max_dmg);
-        System.out.println("攻击力" + max_attack);
-        System.out.println("生命值" + max_hp);
-        System.out.println("防御力" + max_defense);
-        System.out.println("元素精通" + max_elementalMastery);
-        System.out.println("元素充能效率" + max_energyRecharge);
-        System.out.println("暴击率" + max_critRate);
-        System.out.println("暴击伤害" + max_critDmg);
 
-        System.out.println("火元素伤害加成" + max_fireBonus);
-        System.out.println("水元素伤害加成" + max_waterBonus);
-        System.out.println("草元素伤害加成" + max_dendroBonus);
-        System.out.println("雷元素伤害加成" + max_thunderBonus);
-        System.out.println("风元素伤害加成" + max_windBonus);
-        System.out.println("冰元素伤害加成" + max_iceBonus);
-        System.out.println("岩元素伤害加成" + max_rockBonus);
-        System.out.println("物理伤害加成" + max_physicalBonus);
+        System.out.println("最大伤害值：" + max_dmg.get());
+        System.out.println("攻击力" + max_attack.get());
+        System.out.println("生命值" + max_hp.get());
+        System.out.println("防御力" + max_defense.get());
+        System.out.println("元素精通" + max_elementalMastery.get());
+        System.out.println("元素充能效率" + max_energyRecharge.get());
+        System.out.println("暴击率" + max_critRate.get());
+        System.out.println("暴击伤害" + max_critDmg.get());
 
-        printA(flower_max);
-        printA(feather_max);
-        printA(sand_max);
-        printA(cup_max);
-        printA(head_max);
+        System.out.println("火元素伤害加成" + max_fireBonus.get());
+        System.out.println("水元素伤害加成" + max_waterBonus.get());
+        System.out.println("草元素伤害加成" + max_dendroBonus.get());
+        System.out.println("雷元素伤害加成" + max_thunderBonus.get());
+        System.out.println("风元素伤害加成" + max_windBonus.get());
+        System.out.println("冰元素伤害加成" + max_iceBonus.get());
+        System.out.println("岩元素伤害加成" + max_rockBonus.get());
+        System.out.println("物理伤害加成" + max_physicalBonus.get());
+
+        printA(flower_max.get());
+        printA(feather_max.get());
+        printA(sand_max.get());
+        printA(cup_max.get());
+        printA(head_max.get());
 
     }
 
