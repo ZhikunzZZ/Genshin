@@ -23,7 +23,7 @@ public class AttributeDTO {
     //雷元素
     private Double electroDamageBonus;
     //风元素
-    private Double anemoDamageBouns;
+    private Double anemoDamageBonus;
     //冰元素
     private Double cryoDamageBonus;
     //岩元素

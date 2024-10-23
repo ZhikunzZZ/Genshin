@@ -17,68 +17,34 @@ public class ArlecchinoFunction {
 
     final BaseGetMethod baseGetMethod;
 
-    public AttributeAndMultiplierZoneDTO calculateMultipliers(WeaponDTO weapon, CharacterDTO character, Integer constellation,
-                                     Integer normalAttackLevel, Integer elementalSkillLevel, Integer elementalBurstLevel,
-                                     String target) {
+    public void calculateMultipliers(WeaponDTO weapon, CharacterDTO character,
+                                                              AttributeAndMultiplierZoneDTO result, Integer normalAttackLevel,
+                                                              Integer elementalSkillLevel, Integer elementalBurstLevel,
+                                                              Integer constellation, String target) {
 
         double baseAttack = character.getAttack() + weapon.getBaseAttack();
         double baseDefend = character.getDefend();
         double baseLife = character.getLife();
-        double elementalMastery = character.getElementalMastery();
-        double recharge = character.getRecharge();
-        double critRate = 0.0;
-        double critDmg = 0.0;
-        double fireBonus = 0.0; //后续数据库还应添加相应元素加成字段
-
-        double baseZone = 0.0;
-        double damageMultiplierZone = 0.0;
-
-        AttributeAndMultiplierZoneDTO result = new AttributeAndMultiplierZoneDTO();
 
         if(target.equals("arlecchinoNormalAttack")){
 
             double rd = baseGetMethod.getNormalAttackMultiplierByIdAndLevel("Arlecchino_rd", normalAttackLevel);
             double hit1 = baseGetMethod.getNormalAttackMultiplierByIdAndLevel("Arlecchino_1", normalAttackLevel);
 
-            baseZone += rd * 1.7 + hit1;
+            result.setBaseDamageMultiplierZone(result.getBaseDamageMultiplierZone() + (rd * 1.7 + hit1));
+            result.setPyroDamageBonus(result.getPyroDamageBonus() + 0.4); //0.4是生活天赋火伤（后续应该修改）
 
-            damageMultiplierZone += 0.4; //0.4是生活天赋火伤（后续应该修改）
+            //命座加成
+            if(constellation == 6){
+                result.setCriticalRate(result.getCriticalRate() + 0.1);
+                result.setCriticalDamage(result.getCriticalDamage() + 0.7);
+            }
 
+            if(constellation >= 1){
+                result.setBaseDamageMultiplierZone(result.getBaseDamageMultiplierZone() + 1.7);
+            }
 
-        if(constellation == 6){
-            critRate += 0.1;
-            critDmg += 0.7;
-        }
-
-
-        if(constellation >= 1){
-            baseZone += 1.7;
-        }
-
-        result.setBaseDamageMultiplierZone(baseZone);
-        result.setBonusDamageMultiplierZone(damageMultiplierZone);
-        result.setCriticalRate(critRate);
-        result.setCriticalDamage(critDmg);
 
         }
-
-    return result;
-
-
-
-
-
-
-
-
-
-
     }
-
-
-
-
-
-
-
 }

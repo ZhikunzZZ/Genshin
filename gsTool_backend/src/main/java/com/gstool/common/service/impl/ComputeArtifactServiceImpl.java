@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Service
 @AllArgsConstructor
@@ -47,55 +46,42 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         double baseAttack = character.getAttack() + weapon.getBaseAttack();
         double baseHp = character.getLife();
         double baseDefend = character.getDefend();
-        double baseElementalMastery = character.getElementalMastery();
-        double baseRecharge = character.getRecharge();
-        double baseCriticalRate = character.getCriticalRate();
-        double baseCriticalDmg = character.getCriticalDmg();
 
         a.setAttack(baseAttack);
         a.setHp(baseHp);
         a.setDefense(baseDefend);
-        a.setElementalMastery(baseElementalMastery);
-        a.setEnergyRecharge(baseRecharge);
-        a.setCriticalRate(baseCriticalRate);
-        a.setCriticalDamage(baseCriticalDmg);
+        a.setElementalMastery(character.getElementalMastery());
+        a.setEnergyRecharge(character.getRecharge());
+        a.setCriticalRate(character.getCriticalRate());
+        a.setCriticalDamage(character.getCriticalDmg());
+
         //治疗加成与护盾强度（暂时无用）
-        a.setHealingBonus(0.0);
-        a.setShieldStrength(0.0);
-        //火元素
-        a.setPyroDamageBonus(0.0);
-        //水元素
-        a.setHydroDamageBonus(0.0);
-        //草元素
-        a.setDendroDamageBonus(0.0);
-        //雷元素
-        a.setElectroDamageBonus(0.0);
-        //风元素
-        a.setAnemoDamageBouns(0.0);
-        //冰元素
-        a.setCryoDamageBonus(0.0);
-        //岩元素
-        a.setGeoDamageBonus(0.0);
-        //物理
-        a.setPhysicalDamageBonus(0.0);
+        a.setHealingBonus(character.getHealingBonus());
+        a.setShieldStrength(character.getShieldStrength());
 
+        a.setPyroDamageBonus(character.getPyroDamageBonus());               //火元素
+        a.setHydroDamageBonus(character.getHydroDamageBonus());             //水元素
+        a.setDendroDamageBonus(character.getDendroDamageBonus());           //草元素
+        a.setElectroDamageBonus(character.getElectroDamageBonus());         //雷元素
+        a.setAnemoDamageBonus(character.getAnemoDamageBonus());             //风元素
+        a.setCryoDamageBonus(character.getCryoDamageBonus());               //冰元素
+        a.setGeoDamageBonus(character.getGeoDamageBonus());                 //岩元素
+        a.setPhysicalDamageBonus(character.getPhysicalDamageBonus());       //物理
+
+        //private Double criticalMultiplierZone; 暴击乘区为最后根据暴击率与爆伤计算
+        //基础伤害乘区
         a.setBaseDamageMultiplierZone(0.0);
-
         //加成乘区
-        a.setBonusDamageMultiplierZone(0.0);
-        //防御乘区
+        a.setBonusDamageMultiplierZone(1.0);
+        //防御乘区（同等级默认为0.5）
         a.setDefenseMultiplierZone(0.5);
         //抗性乘区
         a.setResistanceMultiplierZone(0.9);
 
-        //加入角色自身数值（包括天赋，命座，普攻或技能倍率）
-        AttributeAndMultiplierZoneDTO c_result = arlecchinoFunction.calculateMultipliers(weapon, character, query.getConstellation(),
-                query.getNormaLAttackLevel(), query.getElementalSkillLevel(), query.getElementalBurstLevel(), query.getComputeParam());
-
-        a.setBaseDamageMultiplierZone(a.getBaseDamageMultiplierZone() + c_result.getBaseDamageMultiplierZone());
-        a.setBonusDamageMultiplierZone(a.getBonusDamageMultiplierZone() + c_result.getBonusDamageMultiplierZone());
-        a.setCriticalRate(a.getCriticalRate() + c_result.getCriticalRate());
-        a.setCriticalDamage(a.getCriticalDamage() + c_result.getCriticalDamage());
+        //加入角色自身数值（天赋，命座，普攻或技能倍率）
+        arlecchinoFunction.calculateMultipliers(weapon, character, a, query.getNormaLAttackLevel(),
+                                                query.getElementalSkillLevel(), query.getElementalBurstLevel(),
+                                                query.getConstellation(), query.getComputeParam());
 
         //加入武器副词条以及武器被动
         baseSetMethod.AddStatAndPassiveEffect(a, weapon);
@@ -111,9 +97,22 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
 
         double max_dmg = 0.0;
         double max_attack = 0.0;
+        double max_hp = 0.0;
+        double max_defense = 0.0;
+        double max_elementalMastery = 0.0;
+        double max_energyRecharge = 0.0;
         double max_critRate = 0.0;
         double max_critDmg = 0.0;
+
         double max_fireBonus = 0.0;
+        double max_waterBonus = 0.0;
+        double max_dendroBonus = 0.0;
+        double max_thunderBonus = 0.0;
+        double max_windBonus = 0.0;
+        double max_iceBonus = 0.0;
+        double max_rockBonus = 0.0;
+        double max_physicalBonus = 0.0;
+
         ArtifactDTO flower_max = null;
         ArtifactDTO feather_max = null;
         ArtifactDTO sand_max = null;
@@ -133,18 +132,50 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
                         for (ArtifactDTO head: headList) {
 
                             double attack = a.getAttack();
+                            double Hp = a.getHp();
+                            double defense = a.getDefense();
+                            double elementalMastery = a.getElementalMastery();
+                            double energyRecharge = a.getEnergyRecharge();
                             double critRate = a.getCriticalRate();
                             double critDmg = a.getCriticalDamage();
-                            double fireBonus = a.getPyroDamageBonus();
+                            double fireBonus = a.getPyroDamageBonus();                      //火元素
+                            double waterBonus = a.getHydroDamageBonus();                    //水元素
+                            double dendroBonus = a.getDendroDamageBonus();                  //草元素
+                            double thunderBonus = a.getElectroDamageBonus();                //雷元素
+                            double windBonus = a.getAnemoDamageBonus();                    //风元素
+                            double iceBonus = a.getCryoDamageBonus();                      //冰元素
+                            double rockBonus = a.getGeoDamageBonus();                        //岩元素
+                            double physicalBonus = a.getPhysicalDamageBonus();              //物理
+
 
                             attack += (getMainStatValue(sand, "attackPercentage") + getMainStatValue(cup, "attackPercentage")
-                                    + getMainStatValue(head, "attackPercentage") + getSubStatValue(flower, "attackPercentage")
-                                    + getSubStatValue(feather, "attackPercentage") + getSubStatValue(sand, "attackPercentage")
-                                    + getSubStatValue(cup, "attackPercentage") + getSubStatValue(head, "attackPercentage")) * baseAttack;
+                                    + getMainStatValue(head, "attackPercentage")
+                                    + getSubStatValue(flower, "attackPercentage") + getSubStatValue(feather, "attackPercentage")
+                                    + getSubStatValue(sand, "attackPercentage") + getSubStatValue(cup, "attackPercentage")
+                                    + getSubStatValue(head, "attackPercentage")) * baseAttack;
 
-                            attack += getMainStatValue(feather, "attackStatic") + getSubStatValue(flower, "attackStatic")
-                                    + getSubStatValue(feather, "attackStatic") + getSubStatValue(sand, "attackStatic")
+                            attack += getMainStatValue(feather, "attackStatic")
+                                    + getSubStatValue(flower, "attackStatic") + getSubStatValue(sand, "attackStatic")
                                     + getSubStatValue(cup, "attackStatic") + getSubStatValue(head, "attackStatic");
+
+                            Hp += (getMainStatValue(sand, "lifePercentage") + getMainStatValue(cup, "lifePercentage")
+                                    + getMainStatValue(head, "lifePercentage")
+                                    + getSubStatValue(flower, "flowerPercentage") + getSubStatValue(feather, "lifePercentage")
+                                    + getSubStatValue(sand, "lifePercentage") + getSubStatValue(cup, "lifePercentage")
+                                    + getSubStatValue(head, "lifePercentage")) * Hp;
+
+                            Hp += getMainStatValue(flower, "lifeStatic")
+                                    + getSubStatValue(feather, "lifeStatic") + getSubStatValue(sand, "lifeStatic")
+                                    + getSubStatValue(cup, "lifeStatic") + getSubStatValue(head, "lifeStatic");
+
+                            defense += (getMainStatValue(sand, "defendPercentage") + getMainStatValue(cup, "defendPercentage")
+                                    + getMainStatValue(head, "defendPercentage") + getSubStatValue(flower, "defendPercentage")
+                                    + getSubStatValue(feather, "defendPercentage") + getSubStatValue(sand, "defendPercentage")
+                                    + getSubStatValue(cup, "defendPercentage") + getSubStatValue(head, "defendPercentage")) * defense;
+
+                            defense += getSubStatValue(feather, "defendStatic")
+                                    + getSubStatValue(flower, "defendStatic") + getSubStatValue(sand, "defendStatic")
+                                    + getSubStatValue(cup, "defendStatic") + getSubStatValue(head, "defendStatic");
 
                             critRate += getMainStatValue(head, "critical") + getSubStatValue(flower, "critical")
                                     + getSubStatValue(feather, "critical") + getSubStatValue(sand, "critical")
@@ -154,41 +185,87 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
                                     + getSubStatValue(feather, "criticalDamage") + getSubStatValue(sand, "criticalDamage")
                                     + getSubStatValue(cup, "criticalDamage") + getSubStatValue(head, "criticalDamage");
 
+                            elementalMastery += getMainStatValue(sand, "elementalMastery") + getMainStatValue(cup, "elementalMastery")
+                                    + getMainStatValue(head, "elementalMastery")
+                                    + getSubStatValue(flower, "elementalMastery") + getSubStatValue(feather, "elementalMastery")
+                                    + getSubStatValue(sand, "elementalMastery") + getSubStatValue(cup, "elementalMastery")
+                                    + getSubStatValue(head, "elementalMastery");
+
+                            energyRecharge += getMainStatValue(sand, "recharge")
+                                    + getSubStatValue(flower, "recharge") + getSubStatValue(feather, "recharge")
+                                    + getSubStatValue(sand, "recharge") + getSubStatValue(cup, "recharge")
+                                    + getSubStatValue(head, "recharge");
+
                             fireBonus += getMainStatValue(cup, "fireBonus");
+                            waterBonus += getMainStatValue(head, "waterBonus");
+                            dendroBonus += getMainStatValue(head, "dendroBonus");
+                            thunderBonus += getMainStatValue(head, "thunderBonus");
+                            windBonus += getMainStatValue(head, "windBonus");
+                            iceBonus += getMainStatValue(head, "iceBonus");
+                            rockBonus += getMainStatValue(head, "rockBonus");
+                            physicalBonus += getMainStatValue(head, "physicalBonus");
+
 
                             double hope_dmg = 0.0;
 
                             AttributeAndMultiplierZoneDTO b = new AttributeAndMultiplierZoneDTO();
                             b.setAttack(attack);
+                            b.setHp(Hp);
+                            b.setDefense(defense);
+                            b.setElementalMastery(elementalMastery);
+                            b.setEnergyRecharge(energyRecharge);
                             b.setCriticalRate(critRate);
                             b.setCriticalDamage(critDmg);
+
+                            b.setPyroDamageBonus(fireBonus);            //火元素
+                            b.setHydroDamageBonus(waterBonus);          //水元素
+                            b.setDendroDamageBonus(dendroBonus);        //草元素
+                            b.setElectroDamageBonus(thunderBonus);      //雷元素
+                            b.setAnemoDamageBonus(windBonus);           //风元素
+                            b.setCryoDamageBonus(iceBonus);             //冰元素
+                            b.setGeoDamageBonus(rockBonus);             //岩元素
+                            b.setPhysicalDamageBonus(physicalBonus);    //物理
+
                             b.setBaseDamageMultiplierZone(baseDamageMultiplierZone);
                             b.setBonusDamageMultiplierZone(bonusDamageMultiplierZone);
                             b.setDefenseMultiplierZone(defenseMultiplierZone);
                             b.setResistanceMultiplierZone(resistanceMultiplierZone);
 
-
                             //加入圣遗物套装加成
                             artifactSetBonus(flower, feather, sand, cup, head, baseAttack, b);
 
+                            //计算暴击乘区
                             double crit_part = (1 + critDmg) * (critRate) + 1 * (1 - critRate);
 
-                            hope_dmg = (b.getBaseDamageMultiplierZone() * b.getAttack()) * (1 + b.getBonusDamageMultiplierZone() + fireBonus) * crit_part * b.getDefenseMultiplierZone() * b.getResistanceMultiplierZone();
+                            //计算伤害
+                            hope_dmg = (b.getBaseDamageMultiplierZone() * b.getAttack()) * (b.getBonusDamageMultiplierZone() + fireBonus)
+                                    * crit_part * b.getDefenseMultiplierZone() * b.getResistanceMultiplierZone();
 
-
+                            //如果为最高伤害值，替换
                             if(hope_dmg > max_dmg){
-
                                 max_dmg = hope_dmg;
                                 max_attack = b.getAttack();
+                                max_hp = b.getHp();
+                                max_defense = b.getDefense();
+                                max_elementalMastery = b.getElementalMastery();
+                                max_energyRecharge = b.getEnergyRecharge();
                                 max_critRate = critRate;
                                 max_critDmg = critDmg;
-                                max_fireBonus = fireBonus;
+
+                                max_fireBonus = b.getPyroDamageBonus();
+                                max_waterBonus = b.getHydroDamageBonus();
+                                max_dendroBonus = b.getDendroDamageBonus();
+                                max_thunderBonus = b.getElectroDamageBonus();
+                                max_windBonus = b.getAnemoDamageBonus();
+                                max_iceBonus = b.getCryoDamageBonus();
+                                max_rockBonus = b.getGeoDamageBonus();
+                                max_physicalBonus = b.getPhysicalDamageBonus();
+
                                 flower_max = flower;
                                 feather_max = feather;
                                 sand_max = sand;
                                 cup_max = cup;
                                 head_max = head;
-
 
                             }
                         }
@@ -196,11 +273,25 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
                 }
             }
         }
-        System.out.println(max_dmg);
-        System.out.println(max_attack);
-        System.out.println(max_critRate);
-        System.out.println(max_critDmg);
-        System.out.println(max_fireBonus);
+
+        System.out.println("最大伤害值：" + max_dmg);
+        System.out.println("攻击力" + max_attack);
+        System.out.println("生命值" + max_hp);
+        System.out.println("防御力" + max_defense);
+        System.out.println("元素精通" + max_elementalMastery);
+        System.out.println("元素充能效率" + max_energyRecharge);
+        System.out.println("暴击率" + max_critRate);
+        System.out.println("暴击伤害" + max_critDmg);
+
+        System.out.println("火元素伤害加成" + max_fireBonus);
+        System.out.println("水元素伤害加成" + max_waterBonus);
+        System.out.println("草元素伤害加成" + max_dendroBonus);
+        System.out.println("雷元素伤害加成" + max_thunderBonus);
+        System.out.println("风元素伤害加成" + max_windBonus);
+        System.out.println("冰元素伤害加成" + max_iceBonus);
+        System.out.println("岩元素伤害加成" + max_rockBonus);
+        System.out.println("物理伤害加成" + max_physicalBonus);
+
         printA(flower_max);
         printA(feather_max);
         printA(sand_max);
