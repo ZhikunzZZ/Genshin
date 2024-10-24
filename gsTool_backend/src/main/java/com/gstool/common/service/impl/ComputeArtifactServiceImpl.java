@@ -6,22 +6,20 @@ import com.gstool.common.dao.NormalAttackMultiplierDao;
 import com.gstool.common.dao.WeaponDao;
 import com.gstool.common.model.base.ArtifactListDTO;
 import com.gstool.common.model.base.AttributeAndMultiplierZoneDTO;
-import com.gstool.common.model.base.AttributeDTO;
 import com.gstool.common.model.entity.ArtifactDTO;
 import com.gstool.common.model.entity.CharacterDTO;
-import com.gstool.common.model.entity.NormalAttackMultiplierDTO;
 import com.gstool.common.model.entity.WeaponDTO;
 import com.gstool.common.model.query.ComputeArtifactQuery;
 import com.gstool.common.service.ComputeArtifactService;
 import com.gstool.common.service.method.BaseGetMethod;
 import com.gstool.common.service.method.BaseSetMethod;
-import com.gstool.common.service.method.targetFunction.fire.ArlecchinoFunction;
+import com.gstool.common.service.method.BuffCalculator;
+import com.gstool.common.service.method.characterFunction.FindCharacterFunction;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Service
@@ -33,8 +31,9 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
     private NormalAttackMultiplierDao normalAttackMultiplierDao;
     private ArtifactDao artifactDao;
     private BaseGetMethod baseGetMethod;
-    private ArlecchinoFunction arlecchinoFunction;
     private BaseSetMethod baseSetMethod;
+    private FindCharacterFunction findCharacterFunction;
+    private BuffCalculator buffCalculator;
 
     @Override
     public void computeArtifact(ComputeArtifactQuery query){
@@ -69,23 +68,25 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         a.setGeoDamageBonus(character.getGeoDamageBonus());                 //岩元素
         a.setPhysicalDamageBonus(character.getPhysicalDamageBonus());       //物理
 
-        //private Double criticalMultiplierZone; 暴击乘区为最后根据暴击率与爆伤计算
         //基础伤害乘区
         a.setBaseDamageMultiplierZone(0.0);
         //加成乘区
         a.setBonusDamageMultiplierZone(1.0);
         //防御乘区（同等级默认为0.5）
         a.setDefenseMultiplierZone(0.5);
-        //抗性乘区
-        a.setResistanceMultiplierZone(0.9);
+        //抗性
+        a.setResistance(0.1);
 
         //加入角色自身数值（天赋，命座，普攻或技能倍率）
-        arlecchinoFunction.calculateMultipliers(weapon, character, a, query.getNormaLAttackLevel(),
+        findCharacterFunction.characterFunction(weapon, character, a, query.getNormaLAttackLevel(),
                 query.getElementalSkillLevel(), query.getElementalBurstLevel(),
                 query.getConstellation(), query.getComputeParam());
 
         //加入武器副词条以及武器被动
         baseSetMethod.AddStatAndPassiveEffect(a, weapon);
+
+        //加入buffs
+        buffCalculator.calculate(query.getBuffs(), a, baseAttack, baseHp, baseDefend);
 
         //筛选有效圣遗物
         ArtifactListDTO targetList = baseGetMethod.getTargetArtifactList(character.getId(), "111");
@@ -95,6 +96,12 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         List<ArtifactDTO> sandList = targetList.getSandList();
         List<ArtifactDTO> cupList = targetList.getCupList();
         List<ArtifactDTO> headList = targetList.getHeadList();
+
+        System.out.println("flower list size: " + flowerList.size());
+        System.out.println("feather list size: " + featherList.size());
+        System.out.println("sand list size: " + sandList.size());
+        System.out.println("cup list size: " + cupList.size());
+        System.out.println("head list size: " + headList.size());
 
         AtomicReference<Double> max_dmg = new AtomicReference<>(0.0);
         AtomicReference<Double> max_attack = new AtomicReference<>(0.0);
@@ -124,108 +131,115 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         double baseDamageMultiplierZone = a.getBaseDamageMultiplierZone();
         double bonusDamageMultiplierZone = a.getBonusDamageMultiplierZone();
         double defenseMultiplierZone = a.getDefenseMultiplierZone();
-        double resistanceMultiplierZone = a.getResistanceMultiplierZone();
+        double resistanceMultiplierZone;
+        if (a.getResistance() < 0){
+            resistanceMultiplierZone = 1 - (a.getResistance()) / 2;
 
+        }else{
+            resistanceMultiplierZone = 1 - a.getResistance();
+        }
+        a.setResistanceMultiplierZone(resistanceMultiplierZone);
+
+        double attack = a.getAttack();
+        double Hp = a.getHp();
+        double defense = a.getDefense();
+        double elementalMastery = a.getElementalMastery();
+        double energyRecharge = a.getEnergyRecharge();
+        double critRate = a.getCriticalRate();
+        double critDmg = a.getCriticalDamage();
+        double fireBonus = a.getPyroDamageBonus();                      //火元素
+        double waterBonus = a.getHydroDamageBonus();                    //水元素
+        double dendroBonus = a.getDendroDamageBonus();                  //草元素
+        double thunderBonus = a.getElectroDamageBonus();                //雷元素
+        double windBonus = a.getAnemoDamageBonus();                    //风元素
+        double iceBonus = a.getCryoDamageBonus();                      //冰元素
+        double rockBonus = a.getGeoDamageBonus();                        //岩元素
+        double physicalBonus = a.getPhysicalDamageBonus();              //物理
+
+//        Date start = new Date();
         flowerList.parallelStream().forEach(flower -> {
             featherList.parallelStream().forEach(feather -> {
                 for (ArtifactDTO sand: sandList) {
                     for (ArtifactDTO cup : cupList) {
-                        for (ArtifactDTO head : headList) {
+                        for (ArtifactDTO head: headList) {
 
-                            double attack = a.getAttack();
-                            double Hp = a.getHp();
-                            double defense = a.getDefense();
-                            double elementalMastery = a.getElementalMastery();
-                            double energyRecharge = a.getEnergyRecharge();
-                            double critRate = a.getCriticalRate();
-                            double critDmg = a.getCriticalDamage();
-                            double fireBonus = a.getPyroDamageBonus();                      //火元素
-                            double waterBonus = a.getHydroDamageBonus();                    //水元素
-                            double dendroBonus = a.getDendroDamageBonus();                  //草元素
-                            double thunderBonus = a.getElectroDamageBonus();                //雷元素
-                            double windBonus = a.getAnemoDamageBonus();                    //风元素
-                            double iceBonus = a.getCryoDamageBonus();                      //冰元素
-                            double rockBonus = a.getGeoDamageBonus();                        //岩元素
-                            double physicalBonus = a.getPhysicalDamageBonus();              //物理
-
-
-                            attack += (getMainStatValue(sand, "attackPercentage") + getMainStatValue(cup, "attackPercentage")
+                            double attackLocalSet = (getMainStatValue(sand, "attackPercentage") + getMainStatValue(cup, "attackPercentage")
                                     + getMainStatValue(head, "attackPercentage")
                                     + getSubStatValue(flower, "attackPercentage") + getSubStatValue(feather, "attackPercentage")
                                     + getSubStatValue(sand, "attackPercentage") + getSubStatValue(cup, "attackPercentage")
-                                    + getSubStatValue(head, "attackPercentage")) * baseAttack;
+                                    + getSubStatValue(head, "attackPercentage")) * baseAttack + attack;
 
-                            attack += getMainStatValue(feather, "attackStatic")
+                            attackLocalSet += getMainStatValue(feather, "attackStatic")
                                     + getSubStatValue(flower, "attackStatic") + getSubStatValue(sand, "attackStatic")
                                     + getSubStatValue(cup, "attackStatic") + getSubStatValue(head, "attackStatic");
 
-                            Hp += (getMainStatValue(sand, "lifePercentage") + getMainStatValue(cup, "lifePercentage")
+                            double hpLocalSet = (getMainStatValue(sand, "lifePercentage") + getMainStatValue(cup, "lifePercentage")
                                     + getMainStatValue(head, "lifePercentage")
                                     + getSubStatValue(flower, "flowerPercentage") + getSubStatValue(feather, "lifePercentage")
                                     + getSubStatValue(sand, "lifePercentage") + getSubStatValue(cup, "lifePercentage")
-                                    + getSubStatValue(head, "lifePercentage")) * Hp;
+                                    + getSubStatValue(head, "lifePercentage")) * baseHp + Hp;
 
-                            Hp += getMainStatValue(flower, "lifeStatic")
+                            hpLocalSet += getMainStatValue(flower, "lifeStatic")
                                     + getSubStatValue(feather, "lifeStatic") + getSubStatValue(sand, "lifeStatic")
                                     + getSubStatValue(cup, "lifeStatic") + getSubStatValue(head, "lifeStatic");
 
-                            defense += (getMainStatValue(sand, "defendPercentage") + getMainStatValue(cup, "defendPercentage")
+                            double defenseLocalSet = (getMainStatValue(sand, "defendPercentage") + getMainStatValue(cup, "defendPercentage")
                                     + getMainStatValue(head, "defendPercentage") + getSubStatValue(flower, "defendPercentage")
                                     + getSubStatValue(feather, "defendPercentage") + getSubStatValue(sand, "defendPercentage")
-                                    + getSubStatValue(cup, "defendPercentage") + getSubStatValue(head, "defendPercentage")) * defense;
+                                    + getSubStatValue(cup, "defendPercentage") + getSubStatValue(head, "defendPercentage")) * baseDefend + defense;
 
-                            defense += getSubStatValue(feather, "defendStatic")
+                            defenseLocalSet += getSubStatValue(feather, "defendStatic")
                                     + getSubStatValue(flower, "defendStatic") + getSubStatValue(sand, "defendStatic")
                                     + getSubStatValue(cup, "defendStatic") + getSubStatValue(head, "defendStatic");
 
-                            critRate += getMainStatValue(head, "critical") + getSubStatValue(flower, "critical")
+                            double critRateLocalSet = getMainStatValue(head, "critical") + getSubStatValue(flower, "critical")
                                     + getSubStatValue(feather, "critical") + getSubStatValue(sand, "critical")
-                                    + getSubStatValue(cup, "critical") + getSubStatValue(head, "critical");
+                                    + getSubStatValue(cup, "critical") + getSubStatValue(head, "critical") + critRate;
 
-                            critDmg += getMainStatValue(head, "criticalDamage") + getSubStatValue(flower, "criticalDamage")
+                            double critDmgLocalSet = getMainStatValue(head, "criticalDamage") + getSubStatValue(flower, "criticalDamage")
                                     + getSubStatValue(feather, "criticalDamage") + getSubStatValue(sand, "criticalDamage")
-                                    + getSubStatValue(cup, "criticalDamage") + getSubStatValue(head, "criticalDamage");
+                                    + getSubStatValue(cup, "criticalDamage") + getSubStatValue(head, "criticalDamage") + critDmg;
 
-                            elementalMastery += getMainStatValue(sand, "elementalMastery") + getMainStatValue(cup, "elementalMastery")
+                            double elementalMasteryLocalSet = getMainStatValue(sand, "elementalMastery") + getMainStatValue(cup, "elementalMastery")
                                     + getMainStatValue(head, "elementalMastery")
                                     + getSubStatValue(flower, "elementalMastery") + getSubStatValue(feather, "elementalMastery")
                                     + getSubStatValue(sand, "elementalMastery") + getSubStatValue(cup, "elementalMastery")
-                                    + getSubStatValue(head, "elementalMastery");
+                                    + getSubStatValue(head, "elementalMastery") + elementalMastery;
 
-                            energyRecharge += getMainStatValue(sand, "recharge")
+                            double energyRechargeLocalSet = getMainStatValue(sand, "recharge")
                                     + getSubStatValue(flower, "recharge") + getSubStatValue(feather, "recharge")
                                     + getSubStatValue(sand, "recharge") + getSubStatValue(cup, "recharge")
-                                    + getSubStatValue(head, "recharge");
+                                    + getSubStatValue(head, "recharge") + energyRecharge;
 
-                            fireBonus += getMainStatValue(cup, "fireBonus");
-                            waterBonus += getMainStatValue(head, "waterBonus");
-                            dendroBonus += getMainStatValue(head, "dendroBonus");
-                            thunderBonus += getMainStatValue(head, "thunderBonus");
-                            windBonus += getMainStatValue(head, "windBonus");
-                            iceBonus += getMainStatValue(head, "iceBonus");
-                            rockBonus += getMainStatValue(head, "rockBonus");
-                            physicalBonus += getMainStatValue(head, "physicalBonus");
+                            double fireBonusLocalSet = getMainStatValue(cup, "fireBonus") + fireBonus;
+                            double waterBonusLocalSet = getMainStatValue(head, "waterBonus") + waterBonus;
+                            double dendroBonusLocalSet = getMainStatValue(head, "dendroBonus") + dendroBonus;
+                            double thunderBonusLocalSet = getMainStatValue(head, "thunderBonus") + thunderBonus;
+                            double windBonusLocalSet = getMainStatValue(head, "windBonus") + windBonus;
+                            double iceBonusLocalSet = getMainStatValue(head, "iceBonus") + iceBonus;
+                            double rockBonusLocalSet = getMainStatValue(head, "rockBonus") + rockBonus;
+                            double physicalBonusLocalSet = getMainStatValue(head, "physicalBonus") + physicalBonus;
 
 
                             double hope_dmg = 0.0;
 
                             AttributeAndMultiplierZoneDTO b = new AttributeAndMultiplierZoneDTO();
-                            b.setAttack(attack);
-                            b.setHp(Hp);
-                            b.setDefense(defense);
-                            b.setElementalMastery(elementalMastery);
-                            b.setEnergyRecharge(energyRecharge);
-                            b.setCriticalRate(critRate);
-                            b.setCriticalDamage(critDmg);
+                            b.setAttack(attackLocalSet);
+                            b.setHp(hpLocalSet);
+                            b.setDefense(defenseLocalSet);
+                            b.setElementalMastery(elementalMasteryLocalSet);
+                            b.setEnergyRecharge(energyRechargeLocalSet);
+                            b.setCriticalRate(critRateLocalSet);
+                            b.setCriticalDamage(critDmgLocalSet);
 
-                            b.setPyroDamageBonus(fireBonus);            //火元素
-                            b.setHydroDamageBonus(waterBonus);          //水元素
-                            b.setDendroDamageBonus(dendroBonus);        //草元素
-                            b.setElectroDamageBonus(thunderBonus);      //雷元素
-                            b.setAnemoDamageBonus(windBonus);           //风元素
-                            b.setCryoDamageBonus(iceBonus);             //冰元素
-                            b.setGeoDamageBonus(rockBonus);             //岩元素
-                            b.setPhysicalDamageBonus(physicalBonus);    //物理
+                            b.setPyroDamageBonus(fireBonusLocalSet);            //火元素
+                            b.setHydroDamageBonus(waterBonusLocalSet);          //水元素
+                            b.setDendroDamageBonus(dendroBonusLocalSet);        //草元素
+                            b.setElectroDamageBonus(thunderBonusLocalSet);      //雷元素
+                            b.setAnemoDamageBonus(windBonusLocalSet);           //风元素
+                            b.setCryoDamageBonus(iceBonusLocalSet);             //冰元素
+                            b.setGeoDamageBonus(rockBonusLocalSet);             //岩元素
+                            b.setPhysicalDamageBonus(physicalBonusLocalSet);    //物理
 
                             b.setBaseDamageMultiplierZone(baseDamageMultiplierZone);
                             b.setBonusDamageMultiplierZone(bonusDamageMultiplierZone);
@@ -233,14 +247,15 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
                             b.setResistanceMultiplierZone(resistanceMultiplierZone);
 
                             //加入圣遗物套装加成
-                            artifactSetBonus(flower, feather, sand, cup, head, baseAttack, b);
+                            baseSetMethod.artifactSetBonus(flower, feather, sand, cup, head, baseAttack, b);
 
                             //计算暴击乘区
-                            double crit_part = (1 + critDmg) * (critRate) + 1 * (1 - critRate);
+                            double crit_part = (1 + critDmgLocalSet) * (critRateLocalSet) + 1 * (1 - critRateLocalSet);
 
                             //计算伤害
-                            hope_dmg = (b.getBaseDamageMultiplierZone() * b.getAttack()) * (b.getBonusDamageMultiplierZone() + fireBonus)
+                            hope_dmg = (b.getBaseDamageMultiplierZone() * b.getAttack()) * (b.getBonusDamageMultiplierZone() + fireBonusLocalSet)
                                     * crit_part * b.getDefenseMultiplierZone() * b.getResistanceMultiplierZone();
+
 
                             //如果为最高伤害值，替换
                             if (hope_dmg > max_dmg.get()) {
@@ -268,12 +283,12 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
                                 cup_max.set(cup);
                                 head_max.set(head);
                             }
-
                         }
                     }
                 }
             });
         });
+//        Date end = new Date();
 
 
         System.out.println("最大伤害值：" + max_dmg.get());
@@ -300,6 +315,8 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         printA(cup_max.get());
         printA(head_max.get());
 
+//        System.out.println(end.getTime() - start.getTime());
+
     }
 
 
@@ -317,47 +334,6 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         System.out.println(dto.getForthNormalTagName() + " - " + dto.getForthNormalTagValue());
 
 
-    }
-
-    private void artifactSetBonus(ArtifactDTO flower, ArtifactDTO feather, ArtifactDTO sand, ArtifactDTO cup, ArtifactDTO head, Double baseAttack, AttributeAndMultiplierZoneDTO b) {
-        Map<String, Integer> setCountMap = new HashMap<>();
-
-        ArtifactDTO[] artifacts = {flower, feather, sand, cup, head};
-
-        for (ArtifactDTO artifact : artifacts) {
-            String setName = artifact.getSetName();
-            setCountMap.put(setName, setCountMap.getOrDefault(setName, 0) + 1);
-        }
-
-        for (Map.Entry<String, Integer> entry : setCountMap.entrySet()) {
-            String setName = entry.getKey();
-            int count = entry.getValue();
-
-            if (count >= 4) {
-                switch (setName) {
-                    case "FragmentOfHarmonicWhimsy":
-                        b.setBonusDamageMultiplierZone(b.getBonusDamageMultiplierZone() + 0.54);
-                        break;
-
-                    default:
-                        break;
-                }
-            }
-
-            if (count >= 2) {
-                switch (setName) {
-                    case "FragmentOfHarmonicWhimsy", "Gladiator's Finale", "Shimenawa's Reminiscence":
-                        b.setAttack(b.getAttack() + 0.18 * baseAttack);
-                        break;
-                    case "Crimson Witch of Flames":
-                        b.setBonusDamageMultiplierZone(b.getBonusDamageMultiplierZone() + 0.15); //要修改
-                        break;
-
-                    default:
-                        break;
-                }
-            }
-        }
     }
 
     private double getMainStatValue(ArtifactDTO artifact, String statName) {

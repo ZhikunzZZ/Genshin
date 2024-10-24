@@ -14,4 +14,6 @@ public class AttributeAndMultiplierZoneDTO extends AttributeDTO {
     private Double defenseMultiplierZone;
     //抗性乘区
     private Double resistanceMultiplierZone;
+    //敌方抗性
+    private Double resistance;
 }

@@ -1,15 +1,11 @@
-package com.gstool.common.service.method.targetFunction.fire;
+package com.gstool.common.service.method.characterFunction.fire;
 
-import com.gstool.common.dao.NormalAttackMultiplierDao;
 import com.gstool.common.model.base.AttributeAndMultiplierZoneDTO;
-import com.gstool.common.model.base.AttributeDTO;
 import com.gstool.common.model.entity.CharacterDTO;
 import com.gstool.common.model.entity.WeaponDTO;
 import com.gstool.common.service.method.BaseGetMethod;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @AllArgsConstructor
