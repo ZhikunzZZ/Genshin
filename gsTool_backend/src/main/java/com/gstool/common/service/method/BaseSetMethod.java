@@ -74,7 +74,7 @@ public class BaseSetMethod {
                         b.setAttack(b.getAttack() + 0.18 * baseAttack);
                         break;
                     case "Crimson Witch of Flames":
-                        b.setBonusDamageMultiplierZone(b.getBonusDamageMultiplierZone() + 0.15); //要修改
+                        b.setPyroDamageBonus(b.getPyroDamageBonus() + 0.15);
                         break;
 
                     default:

@@ -67,4 +67,16 @@ public class BaseGetMethod {
         };
     }
 
+    public Double getHopeDamage(String computeParam, double attack, double hp, double defend, double crit_part,
+                                double elementalMasteryLocalSet, double baseDamageZone, double bonusDamageZone,
+                                double defenseZone, double resistanceZone, double fire, double water) {
+        switch (computeParam) {
+            case "arlecchinoNormalAttack":
+                return ((baseDamageZone * attack) * (bonusDamageZone + fire)
+                    * crit_part * defenseZone * resistanceZone);
+
+        }
+        return null;
+    }
+
 }

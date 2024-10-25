@@ -1,6 +1,7 @@
 package com.gstool.common.controller;
 
 import com.gstool.common.model.query.ComputeArtifactQuery;
+import com.gstool.common.model.vo.ComputeArtifactVo;
 import com.gstool.common.service.ArtifactService;
 import com.gstool.common.service.ComputeArtifactService;
 import lombok.AllArgsConstructor;
@@ -34,9 +35,9 @@ public class ArtifactUploadController {
     }
 
     @PostMapping("/compute-artifact")
-    public void computeArtifact(@RequestBody ComputeArtifactQuery query) {
+    public ComputeArtifactVo computeArtifact(@RequestBody ComputeArtifactQuery query) {
 
-        computeArtifactService.computeArtifact(query);
+        return computeArtifactService.computeArtifact(query);
 
     }
 }
