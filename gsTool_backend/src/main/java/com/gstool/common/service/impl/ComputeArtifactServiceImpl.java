@@ -141,7 +141,7 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         a.setResistanceMultiplierZone(resistanceMultiplierZone);
 
         double attack = a.getAttack();
-        double Hp = a.getHp();
+        double hp = a.getHp();
         double defense = a.getDefense();
         double elementalMastery = a.getElementalMastery();
         double energyRecharge = a.getEnergyRecharge();
@@ -156,77 +156,93 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         double rockBonus = a.getGeoDamageBonus();                        //岩元素
         double physicalBonus = a.getPhysicalDamageBonus();              //物理
 
-//        Date start = new Date();
-        flowerList.parallelStream().forEach(flower -> {
+        Date start = new Date();
+
+        cupList.parallelStream().forEach(cup -> {
+
+            double attackP1 = getMainStatValue(cup, "attackPercentage") + getSubStatValue(cup, "attackPercentage");
+            double attack1 = getSubStatValue(cup, "attackStatic");
+            double hpP1 = getMainStatValue(cup, "lifePercentage") + getSubStatValue(cup, "lifePercentage");
+            double hp1 = getSubStatValue(cup, "defendPercentage");
+            double defendP1 = getMainStatValue(cup, "defendPercentage") + getSubStatValue(cup, "defendPercentage");
+            double defend1 = getSubStatValue(cup, "defendStatic");
+            double critRate1 = getSubStatValue(cup, "critical");
+            double critDmg1 = getSubStatValue(cup, "criticalDamage");
+            double elementalMastery1 = getMainStatValue(cup, "elementalMastery") + getSubStatValue(cup, "elementalMastery");
+            double energyRecharge1 = getSubStatValue(cup, "recharge");
+
+            double fireBonusLocalSet = getMainStatValue(cup, "fireBonus") + fireBonus;
+            double waterBonusLocalSet = getMainStatValue(cup, "waterBonus") + waterBonus;
+            double dendroBonusLocalSet = getMainStatValue(cup, "dendroBonus") + dendroBonus;
+            double thunderBonusLocalSet = getMainStatValue(cup, "thunderBonus") + thunderBonus;
+            double windBonusLocalSet = getMainStatValue(cup, "windBonus") + windBonus;
+            double iceBonusLocalSet = getMainStatValue(cup, "iceBonus") + iceBonus;
+            double rockBonusLocalSet = getMainStatValue(cup, "rockBonus") + rockBonus;
+            double physicalBonusLocalSet = getMainStatValue(cup, "physicalBonus") + physicalBonus;
+
             featherList.parallelStream().forEach(feather -> {
-                for (ArtifactDTO sand: sandList) {
-                    for (ArtifactDTO cup : cupList) {
-                        for (ArtifactDTO head: headList) {
 
-                            double attackLocalSet = (getMainStatValue(sand, "attackPercentage") + getMainStatValue(cup, "attackPercentage")
-                                    + getMainStatValue(head, "attackPercentage")
-                                    + getSubStatValue(flower, "attackPercentage") + getSubStatValue(feather, "attackPercentage")
-                                    + getSubStatValue(sand, "attackPercentage") + getSubStatValue(cup, "attackPercentage")
-                                    + getSubStatValue(head, "attackPercentage")) * baseAttack + attack;
+                double attackP2 = getSubStatValue(feather, "attackPercentage") + attackP1;
+                double attack2 = getMainStatValue(feather, "attackStatic") + attack1;
+                double hpP2 = getSubStatValue(feather, "lifePercentage") + hpP1;
+                double hp2 = getSubStatValue(feather, "lifeStatic") + hp1;
+                double defendP2 = getSubStatValue(feather, "defendPercentage") + defendP1;
+                double defend2 = getSubStatValue(feather, "defendStatic") + defend1;
+                double critRate2 = getSubStatValue(feather, "critical") + critRate1;
+                double critDmg2 = getSubStatValue(feather, "criticalDamage") + critDmg1;
+                double elementalMastery2 = getSubStatValue(feather, "elementalMastery") + elementalMastery1;
+                double energyRecharge2 = getSubStatValue(feather, "recharge") + energyRecharge1;
 
-                            attackLocalSet += getMainStatValue(feather, "attackStatic")
-                                    + getSubStatValue(flower, "attackStatic") + getSubStatValue(sand, "attackStatic")
-                                    + getSubStatValue(cup, "attackStatic") + getSubStatValue(head, "attackStatic");
+                flowerList.parallelStream().forEach(flower -> {
 
-                            double hpLocalSet = (getMainStatValue(sand, "lifePercentage") + getMainStatValue(cup, "lifePercentage")
-                                    + getMainStatValue(head, "lifePercentage")
-                                    + getSubStatValue(flower, "flowerPercentage") + getSubStatValue(feather, "lifePercentage")
-                                    + getSubStatValue(sand, "lifePercentage") + getSubStatValue(cup, "lifePercentage")
-                                    + getSubStatValue(head, "lifePercentage")) * baseHp + Hp;
+                    double attackP3 = getSubStatValue(flower, "attackPercentage") + attackP2;
+                    double attack3 = getSubStatValue(flower, "attackStatic") + attack2;
+                    double hpP3 = getSubStatValue(flower, "flowerPercentage") + hpP2;
+                    double hp3 = getMainStatValue(flower, "lifeStatic") + hp2;
+                    double defendP3 = getSubStatValue(flower, "defendPercentage") + defendP2;
+                    double defend3 = getSubStatValue(flower, "defendStatic") + defend2;
+                    double critRate3 = getSubStatValue(flower, "critical") + critRate2;
+                    double critDmg3 = getSubStatValue(flower, "criticalDamage") + critDmg2;
+                    double elementalMastery3 = getSubStatValue(flower, "elementalMastery") + elementalMastery2;
+                    double energyRecharge3 = getSubStatValue(flower, "recharge") + energyRecharge2;
 
-                            hpLocalSet += getMainStatValue(flower, "lifeStatic")
-                                    + getSubStatValue(feather, "lifeStatic") + getSubStatValue(sand, "lifeStatic")
-                                    + getSubStatValue(cup, "lifeStatic") + getSubStatValue(head, "lifeStatic");
+                    sandList.parallelStream().forEach(sand -> {
 
-                            double defenseLocalSet = (getMainStatValue(sand, "defendPercentage") + getMainStatValue(cup, "defendPercentage")
-                                    + getMainStatValue(head, "defendPercentage") + getSubStatValue(flower, "defendPercentage")
-                                    + getSubStatValue(feather, "defendPercentage") + getSubStatValue(sand, "defendPercentage")
-                                    + getSubStatValue(cup, "defendPercentage") + getSubStatValue(head, "defendPercentage")) * baseDefend + defense;
+                        double attackP4 = getMainStatValue(sand, "attackPercentage") + getSubStatValue(sand, "attackPercentage") + attackP3;
+                        double attack4 = getSubStatValue(sand, "attackStatic") + attack3;
+                        double hpP4 = getMainStatValue(sand, "lifePercentage") + getSubStatValue(sand, "lifePercentage") + hpP3;
+                        double hp4 = getSubStatValue(sand, "lifeStatic") + hp3;
+                        double defendP4 = getMainStatValue(sand, "defendPercentage") + getSubStatValue(sand, "defendPercentage") + defendP3;
+                        double defend4 = getSubStatValue(sand, "defendStatic") + defend3;
+                        double critRate4 = getSubStatValue(sand, "critical") + critRate3;
+                        double critDmg4 = getSubStatValue(sand, "criticalDamage") + critDmg3;
+                        double elementalMastery4 = getMainStatValue(sand, "elementalMastery") + getSubStatValue(sand, "elementalMastery") + elementalMastery3;
+                        double energyRecharge4 = getMainStatValue(sand, "recharge") + getSubStatValue(sand, "recharge") + energyRecharge3;
 
-                            defenseLocalSet += getSubStatValue(feather, "defendStatic")
-                                    + getSubStatValue(flower, "defendStatic") + getSubStatValue(sand, "defendStatic")
-                                    + getSubStatValue(cup, "defendStatic") + getSubStatValue(head, "defendStatic");
+                        headList.parallelStream().forEach(head -> {
 
-                            double critRateLocalSet = getMainStatValue(head, "critical") + getSubStatValue(flower, "critical")
-                                    + getSubStatValue(feather, "critical") + getSubStatValue(sand, "critical")
-                                    + getSubStatValue(cup, "critical") + getSubStatValue(head, "critical") + critRate;
+                            double attackLocalSet = (getMainStatValue(head, "attackPercentage") + getSubStatValue(head, "attackPercentage") + attackP4) * baseAttack + attack;
+                            attackLocalSet += getSubStatValue(head, "attackStatic") + attack4;
 
-                            double critDmgLocalSet = getMainStatValue(head, "criticalDamage") + getSubStatValue(flower, "criticalDamage")
-                                    + getSubStatValue(feather, "criticalDamage") + getSubStatValue(sand, "criticalDamage")
-                                    + getSubStatValue(cup, "criticalDamage") + getSubStatValue(head, "criticalDamage") + critDmg;
+                            double hpLocalSet = (getMainStatValue(head, "lifePercentage") + getSubStatValue(head, "lifePercentage") + hpP4) * baseHp + hp;
+                            hpLocalSet += getSubStatValue(head, "lifeStatic") + hp4;
 
-                            double elementalMasteryLocalSet = getMainStatValue(sand, "elementalMastery") + getMainStatValue(cup, "elementalMastery")
-                                    + getMainStatValue(head, "elementalMastery")
-                                    + getSubStatValue(flower, "elementalMastery") + getSubStatValue(feather, "elementalMastery")
-                                    + getSubStatValue(sand, "elementalMastery") + getSubStatValue(cup, "elementalMastery")
-                                    + getSubStatValue(head, "elementalMastery") + elementalMastery;
+                            double defendLocalSet = (getMainStatValue(head, "defendPercentage") + getSubStatValue(head, "defendPercentage") + defendP4) * baseDefend + defense;
+                            defendLocalSet += getSubStatValue(head, "defendStatic") + defend4;
 
-                            double energyRechargeLocalSet = getMainStatValue(sand, "recharge")
-                                    + getSubStatValue(flower, "recharge") + getSubStatValue(feather, "recharge")
-                                    + getSubStatValue(sand, "recharge") + getSubStatValue(cup, "recharge")
-                                    + getSubStatValue(head, "recharge") + energyRecharge;
+                            double critRateLocalSet = getMainStatValue(head, "critical")+ getSubStatValue(head, "critical") + critRate4 + critRate;
+                            double critDmgLocalSet = getMainStatValue(head, "criticalDamage") + getSubStatValue(head, "criticalDamage") + critDmg4 + critDmg;
 
-                            double fireBonusLocalSet = getMainStatValue(cup, "fireBonus") + fireBonus;
-                            double waterBonusLocalSet = getMainStatValue(head, "waterBonus") + waterBonus;
-                            double dendroBonusLocalSet = getMainStatValue(head, "dendroBonus") + dendroBonus;
-                            double thunderBonusLocalSet = getMainStatValue(head, "thunderBonus") + thunderBonus;
-                            double windBonusLocalSet = getMainStatValue(head, "windBonus") + windBonus;
-                            double iceBonusLocalSet = getMainStatValue(head, "iceBonus") + iceBonus;
-                            double rockBonusLocalSet = getMainStatValue(head, "rockBonus") + rockBonus;
-                            double physicalBonusLocalSet = getMainStatValue(head, "physicalBonus") + physicalBonus;
+                            double elementalMasteryLocalSet = getMainStatValue(head, "elementalMastery") + getSubStatValue(head, "elementalMastery") + elementalMastery4 + elementalMastery;
 
+                            double energyRechargeLocalSet = getSubStatValue(head, "recharge") + energyRecharge4 + energyRecharge;
 
                             double hope_dmg = 0.0;
 
                             AttributeAndMultiplierZoneDTO b = new AttributeAndMultiplierZoneDTO();
                             b.setAttack(attackLocalSet);
                             b.setHp(hpLocalSet);
-                            b.setDefense(defenseLocalSet);
+                            b.setDefense(defendLocalSet);
                             b.setElementalMastery(elementalMasteryLocalSet);
                             b.setEnergyRecharge(energyRechargeLocalSet);
                             b.setCriticalRate(critRateLocalSet);
@@ -283,12 +299,12 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
                                 cup_max.set(cup);
                                 head_max.set(head);
                             }
-                        }
-                    }
-                }
+                        });
+                    });
+                });
             });
         });
-//        Date end = new Date();
+        Date end = new Date();
 
 
         System.out.println("最大伤害值：" + max_dmg.get());
@@ -315,7 +331,7 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
         printA(cup_max.get());
         printA(head_max.get());
 
-//        System.out.println(end.getTime() - start.getTime());
+        System.out.println("for循环时间： " + (end.getTime() - start.getTime()));
 
     }
 
