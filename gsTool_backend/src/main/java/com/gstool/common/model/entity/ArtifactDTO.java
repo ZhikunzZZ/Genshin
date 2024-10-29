@@ -18,34 +18,34 @@ public class ArtifactDTO {
     @TableId(type = IdType.ASSIGN_UUID)
     private String id;
 
-    private Double secondNormalTagValue;
-
-    private Integer star;
-
-    private Double forthNormalTagValue;
-
-    private String secondNormalTagName;
-
     private String position;
+
+    private String mainTagName;
+
+    private Double mainTagValue;
 
     private String firstNormalTagName;
 
+    private Double firstNormalTagValue;
+
+    private String secondNormalTagName;
+
+    private Double secondNormalTagValue;
+
+    private String thirdNormalTagName;
+
+    private Double thirdNormalTagValue;
+
+    private Double forthNormalTagValue;
+
     private String forthNormalTagName;
+
+    private String setName;
+
+    private Integer star;
 
     private Integer level;
 
     private String userId;
-
-    private Double mainTagValue;
-
-    private Double firstNormalTagValue;
-
-    private String thirdNormalTagName;
-
-    private String setName;
-
-    private String mainTagName;
-
-    private Double thirdNormalTagValue;
 
 }

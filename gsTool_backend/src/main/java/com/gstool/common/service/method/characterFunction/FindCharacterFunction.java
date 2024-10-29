@@ -4,6 +4,7 @@ import com.gstool.common.model.base.AttributeAndMultiplierZoneDTO;
 import com.gstool.common.model.entity.CharacterDTO;
 import com.gstool.common.model.entity.WeaponDTO;
 import com.gstool.common.service.method.characterFunction.fire.ArlecchinoFunction;
+import com.gstool.common.service.method.characterFunction.water.MualaniFunction;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 public class FindCharacterFunction {
 
     private final ArlecchinoFunction arlecchinoFunction;
+    private final MualaniFunction mualaniFunction;
 
     public void characterFunction(WeaponDTO weapon, CharacterDTO character,
                                   AttributeAndMultiplierZoneDTO result, Integer normalAttackLevel,
@@ -19,10 +21,16 @@ public class FindCharacterFunction {
                                   Integer constellation, String target) {
 
         switch(character.getName()){
-            case "阿蕾奇诺":
+            case "Arlecchino":
                 arlecchinoFunction.calculateMultipliers(weapon, character, result, normalAttackLevel,
                         elementalSkillLevel, elementalBurstLevel, constellation, target);
                 break;
+
+            case "Mualani":
+                mualaniFunction.calculateMultipliers(weapon, character, result, normalAttackLevel,
+                        elementalSkillLevel, elementalBurstLevel, constellation, target);
+                break;
+
 
 
             default:

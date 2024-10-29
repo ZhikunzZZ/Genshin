@@ -24,8 +24,8 @@ public class ArlecchinoFunction {
 
         if(target.equals("arlecchinoNormalAttack")){
 
-            double rd = baseGetMethod.getNormalAttackMultiplierByIdAndLevel("Arlecchino_rd", normalAttackLevel);
-            double hit1 = baseGetMethod.getNormalAttackMultiplierByIdAndLevel("Arlecchino_1", normalAttackLevel);
+            double rd = baseGetMethod.getMultiplierByIdAndLevel("normalAttack", "Arlecchino_rd", normalAttackLevel);
+            double hit1 = baseGetMethod.getMultiplierByIdAndLevel("normalAttack", "Arlecchino_1", normalAttackLevel);
 
             result.setBaseDamageMultiplierZone(result.getBaseDamageMultiplierZone() + (rd * 1.7 + hit1));
             result.setPyroDamageBonus(result.getPyroDamageBonus() + 0.4); //0.4是生活天赋火伤（后续应该修改）

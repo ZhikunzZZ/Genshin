@@ -58,4 +58,6 @@ public class CharacterDTO {
     //物理
     private Double physicalDamageBonus;
 
+    private String element;
+
 }

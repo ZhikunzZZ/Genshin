@@ -1,6 +1,7 @@
 package com.gstool.common.service.method;
 
 import com.gstool.common.dao.ArtifactDao;
+import com.gstool.common.dao.ElementalSkillMultiplierDao;
 import com.gstool.common.dao.NormalAttackMultiplierDao;
 import com.gstool.common.dao.RecommendArtifactDao;
 import com.gstool.common.model.base.ArtifactListDTO;
@@ -10,11 +11,13 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 
 @Component
 @AllArgsConstructor
 public class BaseGetMethod {
 
+    private final ElementalSkillMultiplierDao elementalSkillMultiplierDao;
     private RecommendArtifactDao recommendArtifactDao;
     private ArtifactDao artifactDao;
     private NormalAttackMultiplierDao normalAttackMultiplierDao;
@@ -47,24 +50,45 @@ public class BaseGetMethod {
 
 
 
-    public Double getNormalAttackMultiplierByIdAndLevel(String id, Integer level){
+    public Double getMultiplierByIdAndLevel(String a, String id, Integer level){
+        if(a.equals("normalAttack")) {
+            return switch (level) {
+                case 13 -> normalAttackMultiplierDao.findByName(id).getLv13();
+                case 12 -> normalAttackMultiplierDao.findByName(id).getLv12();
+                case 11 -> normalAttackMultiplierDao.findByName(id).getLv11();
+                case 10 -> normalAttackMultiplierDao.findByName(id).getLv10();
+                case 9 -> normalAttackMultiplierDao.findByName(id).getLv9();
+                case 8 -> normalAttackMultiplierDao.findByName(id).getLv8();
+                case 7 -> normalAttackMultiplierDao.findByName(id).getLv7();
+                case 6 -> normalAttackMultiplierDao.findByName(id).getLv6();
+                case 5 -> normalAttackMultiplierDao.findByName(id).getLv5();
+                case 4 -> normalAttackMultiplierDao.findByName(id).getLv4();
+                case 3 -> normalAttackMultiplierDao.findByName(id).getLv3();
+                case 2 -> normalAttackMultiplierDao.findByName(id).getLv2();
+                case 1 -> normalAttackMultiplierDao.findByName(id).getLv1();
+                default -> 0.0;
+            };
+        } else if (a.equals("elementalSkill")) {
+            return switch (level) {
+                case 13 -> elementalSkillMultiplierDao.findByName(id).getLv13();
+                case 12 -> elementalSkillMultiplierDao.findByName(id).getLv12();
+                case 11 -> elementalSkillMultiplierDao.findByName(id).getLv11();
+                case 10 -> elementalSkillMultiplierDao.findByName(id).getLv10();
+                case 9 -> elementalSkillMultiplierDao.findByName(id).getLv9();
+                case 8 -> elementalSkillMultiplierDao.findByName(id).getLv8();
+                case 7 -> elementalSkillMultiplierDao.findByName(id).getLv7();
+                case 6 -> elementalSkillMultiplierDao.findByName(id).getLv6();
+                case 5 -> elementalSkillMultiplierDao.findByName(id).getLv5();
+                case 4 -> elementalSkillMultiplierDao.findByName(id).getLv4();
+                case 3 -> elementalSkillMultiplierDao.findByName(id).getLv3();
+                case 2 -> elementalSkillMultiplierDao.findByName(id).getLv2();
+                case 1 -> elementalSkillMultiplierDao.findByName(id).getLv1();
+                default -> 0.0;
+            };
 
-        return switch (level) {
-            case 13 -> normalAttackMultiplierDao.findByName(id).getLv13();
-            case 12 -> normalAttackMultiplierDao.findByName(id).getLv12();
-            case 11 -> normalAttackMultiplierDao.findByName(id).getLv11();
-            case 10 -> normalAttackMultiplierDao.findByName(id).getLv10();
-            case 9 -> normalAttackMultiplierDao.findByName(id).getLv9();
-            case 8 -> normalAttackMultiplierDao.findByName(id).getLv8();
-            case 7 -> normalAttackMultiplierDao.findByName(id).getLv7();
-            case 6 -> normalAttackMultiplierDao.findByName(id).getLv6();
-            case 5 -> normalAttackMultiplierDao.findByName(id).getLv5();
-            case 4 -> normalAttackMultiplierDao.findByName(id).getLv4();
-            case 3 -> normalAttackMultiplierDao.findByName(id).getLv3();
-            case 2 -> normalAttackMultiplierDao.findByName(id).getLv2();
-            case 1 -> normalAttackMultiplierDao.findByName(id).getLv1();
-            default -> 0.0;
-        };
+        }else{
+            return 0.0;
+        }
     }
 
     public Double getHopeDamage(String computeParam, double attack, double hp, double defend, double crit_part,
@@ -74,6 +98,9 @@ public class BaseGetMethod {
             case "arlecchinoNormalAttack":
                 return ((baseDamageZone * attack) * (bonusDamageZone + fire)
                     * crit_part * defenseZone * resistanceZone);
+            case "mualaniElementalSkill":
+                return ((baseDamageZone * hp) * (bonusDamageZone + water)
+                    * 2 * (1 + (2.78*elementalMasteryLocalSet/(elementalMasteryLocalSet+1400))) * crit_part * defenseZone * resistanceZone);
 
         }
         return null;

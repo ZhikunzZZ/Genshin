@@ -82,10 +82,10 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
                 query.getConstellation(), query.getComputeParam());
 
         //加入武器副词条以及武器被动
-        baseSetMethod.AddStatAndPassiveEffect(a, weapon);
+        baseSetMethod.AddStatAndPassiveEffect(a, weapon, baseAttack, baseHp, baseDefend);
 
         //加入buffs
-        buffCalculator.calculate(query.getBuffs(), a, baseAttack, baseHp, baseDefend);
+        buffCalculator.calculate(query.getBuffs(), a, baseAttack, baseHp, baseDefend,character.getElement());
 
         //筛选有效圣遗物
         ArtifactListDTO targetList = baseGetMethod.getTargetArtifactList(character.getId(), "111");
@@ -265,17 +265,25 @@ public class ComputeArtifactServiceImpl implements ComputeArtifactService {
                                         case "FragmentOfHarmonicWhimsy":
                                             bonusDamageZone += 0.54;
                                             break;
+                                        case "ObsidianCodex":
+                                            if (character.getName().equals("Mualani")){
+                                                critRateLocalSet += 0.4;
+                                            }
+                                            break;
                                         default:
                                             break;
                                     }
                                 }
                                 if (count >= 2) {
                                     switch (setName) {
-                                        case "FragmentOfHarmonicWhimsy", "Gladiator's Finale", "Shimenawa's Reminiscence":
+                                        case "FragmentOfHarmonicWhimsy", "gladiatorFinale":
                                             attackLocalSet += 0.18 * baseAttack;
                                             break;
-                                        case "Crimson Witch of Flames":
+                                        case "crimsonWitch":
                                             fire += 0.15;
+                                            break;
+                                        case "ObsidianCodex":
+                                            bonusDamageZone += 0.15;
                                             break;
                                         default:
                                             break;
